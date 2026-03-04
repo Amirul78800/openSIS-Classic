@@ -443,7 +443,6 @@ $(function () {
                 // Add legend
                 legend: {
                     orient: 'vertical',
-                    x: document.getElementById('infographic_donut').offsetWidth / 2,
                     y: 30,
                     x: '55%',
                     itemGap: 15,
