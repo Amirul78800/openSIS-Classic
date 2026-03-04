@@ -422,7 +422,7 @@ function ValidateDate_Portal_Notes() {
   try {
     if (psm && psd && psy && false == isDate(psm, psd, psy)) {
       alert("Please enter the grade posting start date");
-      if (psm && typeof psm.focus === "function") {
+      if (typeof psm.focus === "function") {
         psm.focus();
       }
       return false;
