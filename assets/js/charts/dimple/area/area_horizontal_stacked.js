@@ -52,7 +52,7 @@ $(function () {
         // ------------------------------
 
         // Add area
-        var s = myChart
+        myChart
             .addSeries("Channel", dimple.plot.area)
             .interpolation = "basis";
 
