@@ -61,9 +61,9 @@
     var isRE = query.match(/^\/(.*)\/([a-z]*)$/);
     if (isRE) {
       query = new RegExp(isRE[1], isRE[2].indexOf("i") == -1 ? "" : "i");
-      if (query.test("")) query = /x^/;
+      if (query.test("")) query = /[^\s\S]/;
     } else if (query == "") {
-      query = /x^/;
+      query = /[^\s\S]/;
     }
     return query;
   }
