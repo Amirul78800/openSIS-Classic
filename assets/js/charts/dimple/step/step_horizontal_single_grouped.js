@@ -52,9 +52,8 @@ $(function () {
         // ------------------------------
 
         // Add line
-        var s = myChart
-            .addSeries("Owner", dimple.plot.line)
-            .interpolation = "step";
+        var s = myChart.addSeries("Owner", dimple.plot.line);
+        s.interpolation = "step";
 
         // Line space
         s.barGap = 0.05;
