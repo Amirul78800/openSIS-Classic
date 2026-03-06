@@ -3365,27 +3365,6 @@ function ValidateDate_eligibility_activies() {
     }
   } catch (err) {}
 
-  try {
-    if (psm && psd && psy) {
-      if (false == isDate(psm, psd, psy)) {
-        alert("Please enter the grade posting start date");
-        psm.focus();
-        return false;
-      }
-    }
-  } catch (err) {}
-
-  try {
-    if (psm && psd && psy && pem && ped && pey) {
-      if (true == isDate(pem, ped, pey)) {
-        if (false == CheckDate(psm, psd, psy, pem, ped, pey)) {
-          pem.focus();
-          return false;
-        }
-      }
-    }
-  } catch (err) {}
-
   return true;
 }
 
