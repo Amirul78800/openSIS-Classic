@@ -49,7 +49,7 @@
     {   if(strip_tags(trim($_GET['ids']))=='')
        echo '0';
         else
-        echo '0/'.$_GET['ids'];
+        echo '0/'.htmlspecialchars($_GET['ids'], ENT_QUOTES, 'UTF-8');
        }
     else
         {

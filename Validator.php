@@ -56,12 +56,12 @@ switch ($_GET['validate'])
         $num_pass = $res_pass_chk->num_rows;
         if($num_pass==0)
         {
-            echo '1_'.$_GET['opt'];
+            echo '1_'.htmlspecialchars($_GET['opt'], ENT_QUOTES, 'UTF-8');
             
         }
         else
         {
-            echo '0_'.$_GET['opt'];
+            echo '0_'.htmlspecialchars($_GET['opt'], ENT_QUOTES, 'UTF-8');
         }
 		break;
         

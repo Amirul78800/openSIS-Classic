@@ -288,7 +288,7 @@ if ($used_for == 'username') {
 			$check_email =  DBGet(DBQuery('SELECT * FROM people WHERE EMAIL = \'' . $email . '\''));
 	}
 	if ($check_email[1]['EMAIL'] != '') {
-		echo '1~' . $_GET['form'];
+		echo '1~' . htmlspecialchars($_GET['form'], ENT_QUOTES, 'UTF-8');
 	} else
-		echo '0~' . $_GET['form'];
+		echo '0~' . htmlspecialchars($_GET['form'], ENT_QUOTES, 'UTF-8');
 }
