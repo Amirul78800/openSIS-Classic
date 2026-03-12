@@ -253,7 +253,19 @@ if (optional_param('modfunc', '', PARAM_SPCL) == 'update' && $_POST) {
             }
         } elseif ($_POST['student_id']) {
             unset($_SESSION['UserMP']);
-            $_SESSION['student_id'] = optional_param('student_id', '', PARAM_ALPHANUM);
+            $resolved_student_id = OpenSISResolveAuthorizedStudentId(optional_param('student_id', '', PARAM_ALPHANUM));
+
+            if (!$resolved_student_id) {
+                OpenSISDenyAccess();
+            }
+
+            $_SESSION['student_id'] = $resolved_student_id;
+
+            $student_school_id = OpenSISGetStudentCurrentSchool($resolved_student_id);
+
+            if ($student_school_id) {
+                $_SESSION['UserSchool'] = $student_school_id;
+            }
         } elseif ($_POST['mp']) {
             $_SESSION['UserMP'] = optional_param('mp', '', PARAM_SPCL);
         }
@@ -390,8 +402,21 @@ echo '</SELECT><BR>';
 if (User('PROFILE') == 'parent') {
     $RET = DBGet(DBQuery("SELECT sju.STUDENT_ID, CONCAT(s.LAST_NAME,', ',s.FIRST_NAME) AS FULL_NAME,se.SCHOOL_ID FROM students s,students_join_people sju, student_enrollment se WHERE s.STUDENT_ID=sju.STUDENT_ID AND sju.PERSON_ID='" . User('STAFF_ID') . "' AND se.SYEAR=" . UserSyear() . " AND se.STUDENT_ID=sju.STUDENT_ID AND (('" . DBDate() . "' BETWEEN se.START_DATE AND se.END_DATE OR se.END_DATE IS NULL) AND '" . DBDate() . "'>=se.START_DATE)"));
 
-    if (!UserStudentID())
-        $_SESSION['student_id'] = $RET[1]['STUDENT_ID'];
+    $resolved_student_id = OpenSISResolveAuthorizedStudentId(UserStudentID());
+
+    if (!$resolved_student_id && count($RET)) {
+        $resolved_student_id = $RET[1]['STUDENT_ID'];
+    }
+
+    if ($resolved_student_id) {
+        $_SESSION['student_id'] = $resolved_student_id;
+
+        $student_school_id = OpenSISGetStudentCurrentSchool($resolved_student_id);
+
+        if ($student_school_id) {
+            $_SESSION['UserSchool'] = $student_school_id;
+        }
+    }
 
     echo "<SELECT name=student_id onChange='document.forms[0].submit();'>";
     if (count($RET)) {

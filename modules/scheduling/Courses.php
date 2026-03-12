@@ -35,6 +35,18 @@ if ($_REQUEST['modfunc'] != 'delete' && !$_REQUEST['subject_id']) {
 	if (count($subjects_RET) == 1)
 		$_REQUEST['subject_id'] = $subjects_RET[1]['SUBJECT_ID'];
 }
+
+if (User('PROFILE') == 'teacher') {
+	if (isset($_REQUEST['course_period_id']) && $_REQUEST['course_period_id'] != 'new')
+		$_REQUEST['course_period_id'] = OpenSISRequireCoursePeriodAccess($_REQUEST['course_period_id']);
+
+	if (isset($_REQUEST['w_course_period_id']) && $_REQUEST['w_course_period_id'] != '')
+		$_REQUEST['w_course_period_id'] = OpenSISRequireCoursePeriodAccess($_REQUEST['w_course_period_id']);
+
+	if (isset($_REQUEST['tables']['parent_id']) && $_REQUEST['tables']['parent_id'] != '')
+		$_REQUEST['tables']['parent_id'] = OpenSISRequireCoursePeriodAccess($_REQUEST['tables']['parent_id']);
+}
+
 if ($_REQUEST['course_modfunc'] == 'search') {
 	PopTable('header', 'Search');
 	echo "<FORM name=F1 id=F1 action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=" . strip_tags(trim($_REQUEST[modfunc])) . "&course_modfunc=search method=POST>";
@@ -88,6 +100,15 @@ if ($_REQUEST['tables'] && ($_POST['tables'] || $_REQUEST['ajax']) && AllowEdit(
 				}
 				$columns['DAYS'] = $days;
 			}
+
+			if ($table_name == 'course_periods' && User('PROFILE') == 'teacher') {
+				if ($id != 'new')
+					$id = OpenSISRequireCoursePeriodAccess($id);
+
+				if (isset($columns['PARENT_ID']) && $columns['PARENT_ID'] != '')
+					$columns['PARENT_ID'] = OpenSISRequireCoursePeriodAccess($columns['PARENT_ID']);
+			}
+
 			if ($id != 'new') {
 				if ($table_name == 'courses' && $columns['SUBJECT_ID'] && $columns['SUBJECT_ID'] != $_REQUEST['subject_id'])
 					$_REQUEST['subject_id'] = $columns['SUBJECT_ID'];

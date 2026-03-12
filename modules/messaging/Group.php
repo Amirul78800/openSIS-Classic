@@ -32,6 +32,22 @@ DrawBC(""._messaging." > " . ProgramTitle());
 
 $curProfile = User('PROFILE');
 $userName = User('USERNAME');
+$group_modfunc = isset($_REQUEST['modfunc']) ? $_REQUEST['modfunc'] : '';
+
+if (($group_modfunc == 'delete' || $group_modfunc == 'groupmember') && isset($_REQUEST['group_id'])) {
+    $owned_group = OpenSISRequireOwnedMailGroup($_REQUEST['group_id']);
+    $_REQUEST['group_id'] = $owned_group['GROUP_ID'];
+}
+
+if (($group_modfunc == 'exist_group' || $group_modfunc == 'add_group_member' || $group_modfunc == 'member_insert') && isset($_REQUEST['grp_id'])) {
+    $owned_group = OpenSISRequireOwnedMailGroup($_REQUEST['grp_id']);
+    $_REQUEST['grp_id'] = $owned_group['GROUP_ID'];
+}
+
+if ($group_modfunc == 'members' && isset($_REQUEST['groupid'])) {
+    $owned_group = OpenSISRequireOwnedMailGroup($_REQUEST['groupid']);
+    $_REQUEST['groupid'] = $owned_group['GROUP_ID'];
+}
 
 if (isset($_REQUEST['msg']) && $_REQUEST['msg'] == 4) {
     echo "<FONT style=color:green>"._groupIsSuccessfullyDeleted.". </FONT>";
@@ -753,7 +769,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'member_insert') {
 
 if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'group_insert') {
 
-    $exist_group = DBGet(DBQuery("SELECT * FROM mail_group WHERE USER_NAME='$userName'"));
+    $exist_group = DBGet(DBQuery("SELECT * FROM mail_group WHERE USER_NAME='$userName' AND SCHOOL_ID='" . UserSchool() . "'"));
     foreach ($exist_group as $id => $value) {
         if (strtolower($exist_group[$id]['GROUP_NAME']) == strtolower($_REQUEST['txtGrpName'])) {
             PopTable('header', _alertMessage);
@@ -775,9 +791,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'group_insert') {
 
         if ($_REQUEST['groups']) {
             $grp = array_keys($_REQUEST['groups']);
-            $select = "select group_id from mail_group where group_name='" . str_replace("'", "''", str_replace("\'", "'", $_REQUEST['txtGrpName'])) . "'";
-            $grp_select = DBGet(DBQuery($select));
-            $grp_select[1]['GROUP_ID'];
+            $grp_select[1]['GROUP_ID'] = mysqli_insert_id($connection);
             foreach ($grp as $i => $j) {
                 $idProfile = explode(",", $j);
 
@@ -804,7 +818,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'members' && $_REQUES
 
     if (isset($_REQUEST['groupname'])) {
         $gid = $_REQUEST['groupid'];
-        $exist_group = DBGet(DBQuery("SELECT * FROM mail_group WHERE USER_NAME='$userName' and group_id!='$gid'"));
+        $exist_group = DBGet(DBQuery("SELECT * FROM mail_group WHERE USER_NAME='$userName' AND SCHOOL_ID='" . UserSchool() . "' and group_id!='$gid'"));
         foreach ($exist_group as $id => $value) {
             if ($exist_group[$id]['GROUP_NAME'] == $_REQUEST['groupname']) {
                 PopTable('header', _alertMessage);

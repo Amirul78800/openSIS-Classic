@@ -34,6 +34,27 @@ ini_set('memory_limit', '1200000000M');
 ini_set('max_execution_time', '500000');
 unset($flag);
 
+if (User('PROFILE') == 'parent' || User('PROFILE') == 'student') {
+    if (isset($_REQUEST['student_id']) && $_REQUEST['student_id'] == 'new') {
+        OpenSISDenyAccess();
+    }
+
+    $resolved_student_id = OpenSISResolveAuthorizedStudentId(isset($_REQUEST['student_id']) ? $_REQUEST['student_id'] : '');
+
+    if (!$resolved_student_id) {
+        OpenSISDenyAccess();
+    }
+
+    $_SESSION['student_id'] = $resolved_student_id;
+    $_REQUEST['student_id'] = $resolved_student_id;
+
+    $student_school_id = OpenSISGetStudentCurrentSchool($resolved_student_id);
+
+    if ($student_school_id) {
+        $_SESSION['UserSchool'] = $student_school_id;
+    }
+}
+
 if ($_REQUEST['student_enable'] == 'N' && $_REQUEST['student_id'] != 'new') {
     DBQuery('UPDATE students SET IS_DISABLE=NULL WHERE student_id=' . $_REQUEST['student_id']);
 }
@@ -542,7 +563,24 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
             unset($_REQUEST['month_students']);
             unset($_REQUEST['year_students']);
             if ($_REQUEST['student_id'] && $_REQUEST['student_id'] != 'new') {
-                $_SESSION['student_id'] = $_REQUEST['student_id'];
+                if (User('PROFILE') == 'parent' || User('PROFILE') == 'student') {
+                    $resolved_student_id = OpenSISResolveAuthorizedStudentId($_REQUEST['student_id']);
+
+                    if (!$resolved_student_id) {
+                        OpenSISDenyAccess();
+                    }
+
+                    $_REQUEST['student_id'] = $resolved_student_id;
+                    $_SESSION['student_id'] = $resolved_student_id;
+
+                    $student_school_id = OpenSISGetStudentCurrentSchool($resolved_student_id);
+
+                    if ($student_school_id) {
+                        $_SESSION['UserSchool'] = $student_school_id;
+                    }
+                } else {
+                    $_SESSION['student_id'] = $_REQUEST['student_id'];
+                }
                 $stud_rec = DBGet(DBQuery("SELECT BIRTHDATE,FIRST_NAME,MIDDLE_NAME,LAST_NAME FROM students WHERE 
                             STUDENT_ID=" . UserStudentID()));
                 if (isset($_REQUEST['students']['BIRTHDATE'])) {

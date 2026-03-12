@@ -36,6 +36,14 @@ if (User('PROFILE') == 'student')
     $user_id = UserStudentID();
 else
     $user_id = UserID();
+
+if (User('PROFILE') == 'teacher' && isset($_REQUEST['cp_id']) && $_REQUEST['cp_id'] != '') {
+    $_REQUEST['cp_id'] = OpenSISRequireCoursePeriodAccess($_REQUEST['cp_id']);
+}
+
+if (User('PROFILE') == 'teacher' && isset($_SESSION['course_period_id']) && $_SESSION['course_period_id'] != '') {
+    $_SESSION['course_period_id'] = OpenSISRequireCoursePeriodAccess($_SESSION['course_period_id']);
+}
 //echo'<div class="alert bg-danger alert-styled-left">Message body cannot be empty</div>';
 if (isset($_REQUEST['del']) && $_REQUEST['del'] == 'true') {
     echo '<div class="alert bg-success alert-styled-left">' . _messageDeletedSucessfully . '</div>';
