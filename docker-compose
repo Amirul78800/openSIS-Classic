@@ -1,0 +1,17 @@
+services:
+  opensis:
+    image: amirul78800/opensis-classic:9.3   # tukar ke username Docker Hub sebenar
+    container_name: opensis
+    restart: unless-stopped
+    ports:
+      - "8090:80"        # tukar port host kalau 8090 dah dipakai
+    environment:
+      MYSQL_ROOT_PASSWORD: "tukar_password_ni"   # WAJIB tukar sebelum first run
+      TZ: "Asia/Kuala_Lumpur"
+    volumes:
+      - opensis_app:/var/www/html   # kod app + Data.php + uploads + backups
+      - opensis_db:/var/lib/mysql   # data MariaDB
+
+volumes:
+  opensis_app:
+  opensis_db:
