@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: opensis-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./opensis_data:/var/www/html   # Mount untuk simpan Data.php
+    depends_on:
+      - db
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=opensis
+      - MYSQL_USER=opensis_user
+      - MYSQL_PASSWORD=opensis_pass
+
+  db:
+    image: mariadb:10.4
+    container_name: opensis-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=opensis
+      - MYSQL_USER=opensis_user
+      - MYSQL_PASSWORD=opensis_pass
+    volumes:
+      - ./db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
