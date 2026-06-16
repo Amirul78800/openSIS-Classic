@@ -38,8 +38,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: .
-        file: ./Dockerfile
+        context: ./opensis-deploy          # ← Tunjuk ke folder yang ada Dockerfile
+        file: ./opensis-deploy/Dockerfile  # ← Path penuh ke Dockerfile
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.image_name }}:latest
