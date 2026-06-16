@@ -1,38 +1,28 @@
-# Gunakan base image PHP 8.2 dengan Apache
 FROM php:8.2-apache
 
-# Install system dependencies dan PHP extensions yang diperlukan
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     unzip \
     git \
     libzip-dev \
     libpng-dev \
     libxml2-dev \
+    --no-install-recommends \
     && docker-php-ext-install \
-    mysqli \
-    gd \
-    zip \
-    mbstring \
-    xml \
-    simplexml \
-    dom \
-    fileinfo \
-    iconv \
-    curl \
-    zlib \
-    xmlreader \
-    xmlwriter \
-    ctype \
-    && a2enmod rewrite
+        mysqli \
+        gd \
+        zip \
+        mbstring \
+        xml \
+    && a2enmod rewrite \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Clone dari GitHub repo awak (ganti USERNAME dan REPO)
+# Clone repo awak (ganti USERNAME/REPO)
 WORKDIR /var/www/html
 RUN git clone https://github.com/Amirul78800/openSIS-Classic.git . \
-    && rm -rf .git
-
-# Beri permission untuk web installer tulis file konfigurasi
-RUN chown -R www-data:www-data /var/www/html \
+    && rm -rf .git \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Expose port Apache
 EXPOSE 80
