@@ -1,0 +1,37 @@
+services:
+  db:
+    image: mariadb:11.4
+    container_name: opensis-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      TZ: ${TZ:-Asia/Kuala_Lumpur}
+    volumes:
+      - opensis_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  opensis:
+    image: ${OPENSIS_IMAGE:-amirul78800/opensis-classic:9.3}
+    container_name: opensis
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-8090}:80"
+    environment:
+      TZ: ${TZ:-Asia/Kuala_Lumpur}
+      DB_HOST: db
+      DB_PORT: "3306"
+      ALLOW_INSTALL: ${ALLOW_INSTALL:-false}
+    volumes:
+      - opensis_app:/var/www/html
+
+volumes:
+  opensis_app:
+  opensis_db:
