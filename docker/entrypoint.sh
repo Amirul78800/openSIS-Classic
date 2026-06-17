@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-DATADIR="/var/lib/mysql"
-SOCKET="/run/mysqld/mysqld.sock"
-MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-opensis_root}"
+ALLOW_INSTALL="${ALLOW_INSTALL:-false}"
+DB_HOST="${DB_HOST:-db}"
+DB_PORT="${DB_PORT:-3306}"
 
 log() { echo "[entrypoint] $*"; }
 
@@ -18,60 +18,42 @@ fi
 chown -R www-data:www-data /var/www/html
 
 # ---------------------------------------------------------------------------
-# 2. Initialize MariaDB data directory pada first-run sahaja.
+# 2. Tunggu container DB (service 'db' dalam compose) sedia menerima sambungan
+#    TCP sebelum start Apache. Guna /dev/tcp bash - tak perlu binary tambahan.
 # ---------------------------------------------------------------------------
-mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld
-
-if [ ! -d "${DATADIR}/mysql" ]; then
-    log "Initializing MariaDB data directory di ${DATADIR}..."
-    chown -R mysql:mysql "${DATADIR}"
-
-    if command -v mariadb-install-db >/dev/null 2>&1; then
-        mariadb-install-db --user=mysql --datadir="${DATADIR}" --skip-test-db >/dev/null
-    else
-        mysql_install_db --user=mysql --datadir="${DATADIR}" >/dev/null
-    fi
-
-    # Start mariadbd sementara untuk set root password
-    mariadbd --user=mysql --datadir="${DATADIR}" --socket="${SOCKET}" --skip-networking=0 &
-    TEMP_PID=$!
-
-    log "Tunggu MariaDB sedia (first init)..."
-    for i in $(seq 1 30); do
-        if mysqladmin --socket="${SOCKET}" ping >/dev/null 2>&1; then
-            break
-        fi
-        sleep 1
-    done
-
-    mysql --socket="${SOCKET}" -u root <<-SQL
-        ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-        CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-        GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
-        FLUSH PRIVILEGES;
-SQL
-
-    mysqladmin --socket="${SOCKET}" -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
-    wait "${TEMP_PID}" 2>/dev/null || true
-    log "MariaDB initialized. Root password sudah di-set."
-else
-    chown -R mysql:mysql "${DATADIR}"
-fi
-
-# ---------------------------------------------------------------------------
-# 3. Start MariaDB (untuk run sebenar) sebagai background process.
-# ---------------------------------------------------------------------------
-log "Starting MariaDB..."
-mariadbd --user=mysql --datadir="${DATADIR}" --socket="${SOCKET}" &
-
-for i in $(seq 1 30); do
-    if mysqladmin --socket="${SOCKET}" ping >/dev/null 2>&1; then
-        log "MariaDB up."
+log "Tunggu DB di ${DB_HOST}:${DB_PORT}..."
+for i in $(seq 1 60); do
+    if (exec 3<>"/dev/tcp/${DB_HOST}/${DB_PORT}") 2>/dev/null; then
+        exec 3>&- 3<&-
+        log "DB sedia."
         break
     fi
     sleep 1
+    if [ "$i" -eq 60 ]; then
+        log "AMARAN: DB masih tak sedia lepas 60s, terus start Apache (semak container db)."
+    fi
 done
+
+# ---------------------------------------------------------------------------
+# 3. Auto-lock folder /install lepas setup siap (Data.php wujud), untuk elak
+#    orang luar re-run installer / purge DB. Set ALLOW_INSTALL=true untuk
+#    buka semula (contoh: nak upgrade versi).
+# ---------------------------------------------------------------------------
+INSTALL_DIR="/var/www/html/install"
+DATA_FILE="/var/www/html/Data.php"
+
+if [ -d "${INSTALL_DIR}" ]; then
+    if [ -f "${DATA_FILE}" ] && [ "${ALLOW_INSTALL}" != "true" ]; then
+        if [ ! -f "${INSTALL_DIR}/.htaccess" ]; then
+            log "Setup dah siap - lock folder /install (set ALLOW_INSTALL=true untuk buka semula)."
+            echo "Require all denied" > "${INSTALL_DIR}/.htaccess"
+            chown www-data:www-data "${INSTALL_DIR}/.htaccess"
+        fi
+    elif [ "${ALLOW_INSTALL}" = "true" ] && [ -f "${INSTALL_DIR}/.htaccess" ]; then
+        log "ALLOW_INSTALL=true - membuka semula akses /install."
+        rm -f "${INSTALL_DIR}/.htaccess"
+    fi
+fi
 
 # ---------------------------------------------------------------------------
 # 4. Start Apache (foreground, jadi proses utama container).
