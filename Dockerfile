@@ -43,6 +43,10 @@ RUN { \
         echo 'max_execution_time = 300'; \
         echo 'max_input_vars = 3000'; \
         echo 'date.timezone = Asia/Kuala_Lumpur'; \
+        echo 'display_errors = Off'; \
+        echo 'display_startup_errors = Off'; \
+        echo 'log_errors = On'; \
+        echo 'error_reporting = E_ERROR | E_PARSE'; \
     } > /usr/local/etc/php/conf.d/opensis.ini
 
 # --- Apache: benarkan .htaccess (AllowOverride) + senyapkan ServerName warning ---
