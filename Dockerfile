@@ -1,5 +1,6 @@
 #
-# openSIS-Classic - all-in-one image (Apache + PHP 8.2 + MariaDB)
+# openSIS-Classic - app image (Apache + PHP 8.2). DB jalan dalam container
+# berasingan (mariadb official image) - lihat docker-compose.yml.
 #
 # Build (jalankan dari root repo openSIS-Classic):
 #   docker build -t <docker-hub-username>/opensis-classic:9.3 .
@@ -9,13 +10,13 @@ FROM php:8.2-apache
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL org.opencontainers.image.title="openSIS Classic" \
-      org.opencontainers.image.description="openSIS Classic Community Edition - all-in-one (Apache+PHP+MariaDB) image" \
+      org.opencontainers.image.description="openSIS Classic Community Edition - app image (Apache+PHP). Guna sekali dengan container MariaDB berasingan." \
       org.opencontainers.image.source="https://github.com/Amirul78800/openSIS-Classic"
 
-# --- System packages: MariaDB server + library headers untuk PHP extensions ---
+# --- Library headers untuk PHP extensions (mysqli guna mysqlnd terbina-dalam,
+#     so TAK perlu mariadb-client/libmariadb-dev di sini) ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        mariadb-server \
-        mariadb-client \
+        curl \
         libzip-dev \
         libpng-dev \
         libjpeg62-turbo-dev \
@@ -51,7 +52,9 @@ RUN { \
         echo '</Directory>'; \
     } > /etc/apache2/conf-available/opensis.conf \
     && a2enconf opensis \
-    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && ln -sf /dev/stdout /var/log/apache2/access.log \
+    && ln -sf /dev/stderr /var/log/apache2/error.log
 
 # --- "Bake" source code app ke dalam image. Akan di-seed ke volume oleh entrypoint. ---
 COPY --chown=www-data:www-data . /usr/src/opensis
@@ -59,7 +62,10 @@ COPY --chown=www-data:www-data . /usr/src/opensis
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-VOLUME ["/var/www/html", "/var/lib/mysql"]
+VOLUME ["/var/www/html"]
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
+    CMD curl -sS http://localhost/ -o /dev/null || exit 1
 
 ENTRYPOINT ["entrypoint.sh"]
